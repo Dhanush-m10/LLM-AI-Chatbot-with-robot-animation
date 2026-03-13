@@ -1,5 +1,6 @@
 # API Key — never commit this
 gemini api key.txt
+.streamlit/secrets.toml
 
 # Virtual environment
 .venv/
