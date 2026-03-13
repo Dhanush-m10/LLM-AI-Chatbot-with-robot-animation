@@ -1,0 +1,23 @@
+# API Key — never commit this
+gemini api key.txt
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Output / temp files
+output.txt
+*.log

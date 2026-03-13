@@ -1,0 +1,15 @@
+# Configuration file for AI Chatbot
+# Copy this file and replace YOUR_API_KEY_HERE with your actual Google Gemini API key
+
+# Get your API key from: https://makersuite.google.com/app/apikey
+
+GEMINI_API_KEY=YOUR_API_KEY_HERE
+
+# Usage Instructions:
+# 1. Replace YOUR_API_KEY_HERE with your actual API key
+# 2. Rename this file to .env (optional)
+# 3. Run: export GEMINI_API_KEY="your-key-here" (Linux/Mac)
+#    Or: set GEMINI_API_KEY=your-key-here (Windows)
+# 4. Run: python ai_chatbot.py
+
+# Note: Keep your API key secret! Don't share it or commit it to git.

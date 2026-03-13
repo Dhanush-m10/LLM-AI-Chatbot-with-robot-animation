@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralChat - AI Companion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #ff0088;
+            --tertiary: #00d4ff;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #050810;
+            --bg-card: #151b2e;
+            --text-primary: #e0e7ff;
+            --text-secondary: #8b92b8;
+            --glow: rgba(0, 255, 136, 0.3);
+            --glow-secondary: rgba(255, 0, 136, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Glowing orbs in background */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -200px;
+            right: -200px;
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: var(--secondary);
+            bottom: -150px;
+            left: -150px;
+            animation: float 18s ease-in-out infinite reverse;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--tertiary);
+            top: 50%;
+            left: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: slideDown 0.8s ease-out;
+            position: relative;
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--tertiary), var(--secondary));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+            text-shadow: 0 0 30px var(--glow);
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        /* Settings Icon */
+        .settings-icon {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.2));
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.8rem;
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .settings-icon:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 212, 255, 0.3));
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 0 40px var(--glow);
+        }
+
+        .settings-icon:active {
+            transform: rotate(90deg) scale(0.95);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(0, 255, 136, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.5;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            padding: 1rem 1.5rem;
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 20px var(--glow);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-indicator.error {
+            background: var(--secondary);
+            box-shadow: 0 0 20px var(--glow-secondary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+            box-shadow: 0 0 10px var(--glow);
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: messageSlide 0.5s ease-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .avatar.user {
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .avatar.ai {
+            background: linear-gradient(135deg, var(--secondary), #9333ea);
+            box-shadow: 0 0 20px var(--glow-secondary);
+        }
+
+        .message-content {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem 1.25rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-width: 70%;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-content {
+            text-align: right;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            gap: 0.4rem;
+            padding: 1rem;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #userInput {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #userInput:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        #userInput::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            border: none;
+            border-radius: 12px;
+            color: var(--bg-darker);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .send-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--glow);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        .send-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 2px var(--primary);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-btn {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 0, 136, 0.1);
+            border: 2px solid var(--secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.8rem;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 0, 136, 0.3);
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 0 30px var(--glow-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 150px;
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.6;
+        }
+
+        .form-hint {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .form-hint a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .form-hint a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            color: var(--bg-darker);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--secondary);
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .welcome-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .welcome-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-text {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            font-size: 1.1rem;
+        }
+
+        .welcome-btn {
+            padding: 1.25rem 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            border: none;
+            border-radius: 15px;
+            color: var(--bg-darker);
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px var(--glow);
+        }
+
+        .welcome-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px var(--glow);
+        }
+
+        .welcome-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem 1.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            animation: slideInRight 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.error {
+            border: 2px solid var(--secondary);
+            background: rgba(255, 0, 136, 0.15);
+            color: #ff6b9d;
+        }
+
+        .toast.success {
+            border: 2px solid var(--primary);
+            background: rgba(0, 255, 136, 0.15);
+            color: #5fffb0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 0.8rem;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .settings-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">NeuralChat</h1>
+            <p class="tagline">AI-Powered Companion</p>
+            <div class="settings-icon" id="settingsIcon" onclick="openSettings()">⚙️</div>
+        </header>
+
+        <div class="chat-container">
+            <div class="status-bar">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span class="status-text" id="statusText">Not Configured - Click ⚙️ to setup</span>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="welcome-screen">
+                    <div class="welcome-icon">🤖✨</div>
+                    <h2 class="welcome-title">Welcome to NeuralChat</h2>
+                    <p class="welcome-text">
+                        Your AI companion powered by Google Gemini. 
+                        Click the glowing ⚙️ icon at the top right to configure your API key and start chatting!
+                    </p>
+                    <button class="welcome-btn" onclick="openSettings()">
+                        🚀 Setup Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="userInput" 
+                        placeholder="Type your message here..."
+                        onkeypress="handleKeyPress(event)"
+                    >
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <span>Send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Configuration</h2>
+                <div class="close-btn" onclick="closeSettings()">✕</div>
+            </div>
+
+            <form onsubmit="saveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">
+                        🔑 Google Gemini API Key
+                    </label>
+                    <input 
+                        type="text" 
+                        id="apiKey" 
+                        class="form-input"
+                        placeholder="Paste your API key here..."
+                        required
+                    >
+                    <div class="form-hint">
+                        Don't have an API key? Get one FREE at 
+                        <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="systemPrompt">
+                        🎭 Chatbot Personality
+                    </label>
+                    <textarea 
+                        id="systemPrompt" 
+                        class="form-input"
+                        placeholder="Define your chatbot's personality..."
+                    >You are a helpful and friendly AI assistant.
+You provide clear, concise answers.
+You are knowledgeable about programming and technology.
+You communicate in a professional yet approachable manner.</textarea>
+                    <div class="form-hint">
+                        Customize how your AI responds and behaves
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        💾 Save & Start Chatting
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="clearHistory()">
+                        🗑️ Clear History
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+   <script>
+/* ===============================
+   NeuralChat - Groq Stable Build
+   =============================== */
+
+const API_KEY_STORAGE = "groq_api_key";
+const PROMPT_STORAGE = "system_prompt";
+
+let chatHistory = [];
+let isConfigured = false;
+
+/* DOM Elements */
+const elements = {
+    messages: document.getElementById("messages"),
+    userInput: document.getElementById("userInput"),
+    apiKey: document.getElementById("apiKey"),
+    systemPrompt: document.getElementById("systemPrompt"),
+    settingsModal: document.getElementById("settingsModal"),
+    statusText: document.getElementById("statusText"),
+    statusIndicator: document.getElementById("statusIndicator"),
+    typingIndicator: document.getElementById("typingIndicator"),
+    toast: document.getElementById("toast")
+};
+
+/* ===============================
+   Load Saved Config
+   =============================== */
+window.addEventListener("DOMContentLoaded", () => {
+    const savedKey = localStorage.getItem(API_KEY_STORAGE);
+    const savedPrompt = localStorage.getItem(PROMPT_STORAGE);
+
+    if (savedKey) {
+        elements.apiKey.value = savedKey;
+        isConfigured = true;
+        elements.statusText.textContent = "✅ Connected to Groq";
+    }
+
+    if (savedPrompt) {
+        elements.systemPrompt.value = savedPrompt;
+    }
+});
+
+/* ===============================
+   Modal Controls
+   =============================== */
+function openSettings() {
+    elements.settingsModal.classList.add("active");
+}
+
+function closeSettings() {
+    elements.settingsModal.classList.remove("active");
+}
+
+document.getElementById("settingsModal").addEventListener("click", function(e) {
+    if (e.target === this) closeSettings();
+});
+
+/* ===============================
+   Save Settings
+   =============================== */
+function saveSettings(event) {
+    event.preventDefault();
+
+    const apiKey = elements.apiKey.value.trim();
+    const systemPrompt = elements.systemPrompt.value.trim();
+
+    if (!apiKey) {
+        showToast("❌ API Key required!", "error");
+        return;
+    }
+
+    localStorage.setItem(API_KEY_STORAGE, apiKey);
+    localStorage.setItem(PROMPT_STORAGE, systemPrompt);
+
+    isConfigured = true;
+    elements.statusText.textContent = "✅ Connected to Groq";
+    elements.statusIndicator.classList.remove("error");
+
+    showToast("✅ Groq API Connected!", "success");
+    closeSettings();
+}
+
+/* ===============================
+   Send Message
+   =============================== */
+async function sendMessage() {
+    const message = elements.userInput.value.trim();
+    if (!message) return;
+
+    if (!isConfigured) {
+        showToast("❌ Configure API key first!", "error");
+        openSettings();
+        return;
+    }
+
+    addMessage(message, "user");
+    elements.userInput.value = "";
+
+    elements.typingIndicator.classList.add("active");
+    elements.statusText.textContent = "💭 Thinking...";
+
+    try {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const systemPrompt = localStorage.getItem(PROMPT_STORAGE);
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "llama3-8b-8192",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    ...chatHistory,
+                    { role: "user", content: message }
+                ],
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();  // ✅ ONLY ONCE
+
+        if (!response.ok) {
+            console.error("Groq Error:", data);
+            throw new Error(data.error?.message || "Groq API Error");
+        }
+
+        if (!data.choices || !data.choices.length) {
+            throw new Error("No response from model.");
+        }
+
+        const botReply = data.choices[0].message.content;
+
+        chatHistory.push({ role: "user", content: message });
+        chatHistory.push({ role: "assistant", content: botReply });
+
+        addMessage(botReply, "ai");
+
+        elements.statusText.textContent = "✅ Ready";
+
+    } catch (error) {
+        showToast("❌ " + error.message, "error");
+        elements.statusText.textContent = "❌ Error";
+        elements.statusIndicator.classList.add("error");
+    }
+
+    elements.typingIndicator.classList.remove("active");
+}
+
+/* ===============================
+   UI Helpers
+   =============================== */
+function handleKeyPress(event) {
+    if (event.key === "Enter") sendMessage();
+}
+
+function addMessage(text, sender) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}`;
+
+    const avatar = sender === "user" ? "👤" : "🤖";
+    const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    messageDiv.innerHTML = `
+        <div class="avatar ${sender}">${avatar}</div>
+        <div class="message-content">${escapedText}</div>
+    `;
+
+    elements.messages.appendChild(messageDiv);
+    elements.messages.scrollTop = elements.messages.scrollHeight;
+}
+
+function showToast(message, type = "info") {
+    elements.toast.textContent = message;
+    elements.toast.className = `toast show ${type}`;
+
+    setTimeout(() => {
+        elements.toast.classList.remove("show");
+    }, 4000);
+}
+
+function clearHistory() {
+    if (confirm("Clear chat history?")) {
+        chatHistory = [];
+        elements.messages.innerHTML = "";
+        showToast("✅ Chat cleared", "success");
+    }
+}
+</script>
+
+
+</body>
+</html>
